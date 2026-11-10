@@ -69,10 +69,19 @@ function applyTheme() {
 
 /* ---------------- blocks ---------------- */
 export const RENDER = {
-  hero: b => `<section class="hero">${b.image ? `<div class="hero-bg" style="background-image:url('${esc(img(b.image))}')"></div>` : ''}
-    <div class="hero-in">${b.icon ? `<div class="hero-ic">${esc(b.icon)}</div>` : ''}<h1 class="glow">${esc(t(b.title))}</h1>${t(b.subtitle) ? `<p class="lead">${esc(t(b.subtitle))}</p>` : ''}
-    ${(b.buttons || []).filter(x => x.url).length ? `<div class="btns">${b.buttons.filter(x => x.url).map(x => `<a class="btn ${x.style === 'ghost' ? 'ghost' : 'pri'}" ${link(x.url)}>${esc(t(x.label))}</a>`).join('')}</div>` : ''}</div></section>`,
-  text: b => `<section class="blk txt">${t(b.title) ? `<h2>${esc(t(b.title))}</h2>` : ''}<div class="md">${md(t(b.body))}</div></section>`,
+  hero: b => `<section class="hero${b.cover ? ' has-cover' : ''}">${b.image ? `<div class="hero-bg" style="background-image:url('${esc(img(b.image))}')"></div>` : ''}
+    <div class="hero-in">${t(b.kicker) ? `<span class="kicker">${esc(t(b.kicker))}</span>` : ''}${b.icon ? `<div class="hero-ic">${esc(b.icon)}</div>` : ''}<h1 class="glow">${esc(t(b.title))}</h1>${t(b.subtitle) ? `<p class="lead">${esc(t(b.subtitle))}</p>` : ''}
+    ${(b.chips || []).length ? `<div class="chips">${b.chips.map(c => `<span>${esc(t(c))}</span>`).join('')}</div>` : ''}
+    ${(b.buttons || []).filter(x => x.url).length ? `<div class="btns">${b.buttons.filter(x => x.url).map(x => `<a class="btn ${x.style === 'ghost' ? 'ghost' : 'pri'}" ${link(x.url)}>${esc(t(x.label))}</a>`).join('')}</div>` : ''}</div>
+    ${b.cover ? `<img class="hero-cover" src="${esc(img(b.cover))}" alt="">` : ''}</section>`,
+  gallery: b => (b.images || []).length ? `<section class="blk">${t(b.title) ? `<h2>${esc(t(b.title))}</h2>` : ''}<div class="gal">${b.images.map((src, i) => `<button class="gal-i" data-a="zoom" data-src="${esc(img(src))}" aria-label="${L('Open picture', 'פתיחת תמונה')} ${i + 1}"><img src="${esc(img(src))}" alt="" loading="lazy"></button>`).join('')}</div></section>` : '',
+  features: b => `<section class="blk">${t(b.title) ? `<h2>${esc(t(b.title))}</h2>` : ''}<div class="feats">${(b.items || []).map(f => `<div class="feat"><span class="feat-ic">${esc(f.icon || '✦')}</span><b>${esc(t(f.title))}</b>${t(f.text) ? `<p>${esc(t(f.text))}</p>` : ''}</div>`).join('')}</div></section>`,
+  info: b => `<section class="blk">${t(b.title) ? `<h2>${esc(t(b.title))}</h2>` : ''}<dl class="info">${(b.rows || []).map(r => `<div><dt>${esc(t(r.label))}</dt><dd>${esc(t(r.value))}</dd></div>`).join('')}</dl></section>`,
+  timeline: b => `<section class="blk">${t(b.title) ? `<h2>${esc(t(b.title))}</h2>` : ''}<ol class="tl">${(b.items || []).map(x => { const done = x.date && new Date(x.date) < new Date(); return `<li class="${done ? 'done' : 'next'}"><time>${esc(x.when ? t(x.when) : fmtDay(x.date))}</time><b>${x.url ? `<a ${link(x.url)}>${esc(t(x.title))}</a>` : esc(t(x.title))}</b>${t(x.text) ? `<p>${esc(t(x.text))}</p>` : ''}</li>`; }).join('')}</ol></section>`,
+  faq: b => `<section class="blk">${t(b.title) ? `<h2>${esc(t(b.title))}</h2>` : ''}<div class="faq">${(b.items || []).map(x => `<details><summary>${esc(t(x.q))}</summary><div class="md">${md(t(x.a))}</div></details>`).join('')}</div></section>`,
+  numbers: b => `<section class="blk"><div class="nums">${(b.items || []).map(x => `<div><b>${esc(t(x.value))}</b><span>${esc(t(x.label))}</span></div>`).join('')}</div></section>`,
+  split: b => `<section class="blk"><div class="split${b.flip ? ' flip' : ''}">${b.image ? `<img src="${esc(img(b.image))}" alt="" loading="lazy">` : ''}<div>${t(b.kicker) ? `<span class="kicker">${esc(t(b.kicker))}</span>` : ''}${t(b.title) ? `<h2>${esc(t(b.title))}</h2>` : ''}<div class="md">${md(t(b.body))}</div>${b.url ? `<a class="btn pri sm" ${link(b.url)}>${esc(t(b.label) || L('More', 'עוד'))}</a>` : ''}</div></div></section>`,
+  text: b => `<section class="blk txt">${t(b.kicker) ? `<span class="kicker">${esc(t(b.kicker))}</span>` : ''}${t(b.title) ? `<h2>${esc(t(b.title))}</h2>` : ''}<div class="md">${md(t(b.body))}</div></section>`,
   image: b => b.src ? `<section class="blk ${b.wide ? 'wide' : ''}"><figure class="pic"><img src="${esc(img(b.src))}" alt="${esc(t(b.caption))}" loading="lazy">${t(b.caption) ? `<figcaption>${esc(t(b.caption))}</figcaption>` : ''}</figure></section>` : '',
   cards: b => `<section class="blk">${t(b.title) ? `<h2>${esc(t(b.title))}</h2>` : ''}<div class="cards">${(b.items || []).map(c => `<a class="card${c.soon ? ' soon' : ''}" ${link(c.url)}>
       <div class="card-img">${c.image ? `<img src="${esc(img(c.image))}" alt="" loading="lazy">` : `<span class="card-ic">${esc(c.icon || '★')}</span>`}${t(c.badge) ? `<span class="badge">${esc(t(c.badge))}</span>` : ''}</div>
@@ -142,7 +151,17 @@ export function render() {
   $('#main').innerHTML = (pg.blocks || []).map((b, i) => `<div class="b" data-i="${i}">${(RENDER[b.type] || (() => ''))(b)}</div>`).join('') || `<section class="blk center"><p class="muted">${L('This page is empty.', 'הדף הזה ריק.')}</p></section>`;
   $('#foot').innerHTML = `<div class="soc">${(site.socials || []).map(s => `<a ${link(s.url)}>${esc(s.name)}</a>`).join('')}</div><p>© ${new Date().getFullYear()} Man Studio</p>`;
   tickCountdowns();
+  reveal();
   if (hooks.decorate) hooks.decorate();
+}
+// sections slide in as they scroll into view
+let revObs = null;
+function reveal() {
+  const els = document.querySelectorAll('#main .b');
+  if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) { els.forEach(e => e.classList.add('in')); return; }
+  if (revObs) revObs.disconnect();
+  revObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); revObs.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+  els.forEach((e, i) => { if (i < 2) e.classList.add('in'); else revObs.observe(e); });
 }
 function tickCountdowns() {
   document.querySelectorAll('.count[data-date]').forEach(el => {
@@ -205,6 +224,7 @@ document.addEventListener('click', e => {
   if (k === 'signout') { fb.signOut(); S.memberCode = undefined; document.documentElement.classList.remove('admin'); location.hash = '#/home'; location.reload(); }
   if (k === 'close') closeModal();
   if (k === 'menu') document.body.classList.toggle('menu-open');
+  if (k === 'zoom') modal(`<img class="zoom" src="${esc(a.dataset.src)}" alt=""><div class="row"><button class="btn ghost" data-a="close">${L('Close', 'סגירה')}</button></div>`).classList.add('zoombox');
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
 
@@ -219,7 +239,8 @@ window.addEventListener('hashchange', route);
 (async function boot() {
   try {
     const live = await fb.get('site/live');
-    if (live && live.pages) S.site = live;
+    // published content wins, unless this code ships a newer content version (then the admin publishes it again)
+    if (live && live.pages && (live.version || 1) >= DEFAULT_SITE.version) S.site = live;
   } catch (e) { console.warn('site/live', e.message); }
   S.live = clone(S.site);
   route();

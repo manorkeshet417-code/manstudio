@@ -12,8 +12,15 @@ let editing = false, dirty = false, saveT = null, status = '';
 const T = 'i18n', A = 'i18narea';
 const BTN = [['label', T, 'Text'], ['url', 'url', 'Link (https://… or #/page)'], ['style', 'select', 'Style', ['primary', 'ghost']]];
 export const SCHEMA = {
-  hero: { name: 'Hero (big title)', fields: [['title', T, 'Title'], ['subtitle', A, 'Subtitle'], ['image', 'image', 'Background image'], ['icon', 'text', 'Icon (emoji, optional)'], ['buttons', 'list', 'Buttons', BTN]] },
-  text: { name: 'Text', fields: [['title', T, 'Title (optional)'], ['body', A, 'Text: **bold**, [link](https://…), blank line = new paragraph']] },
+  hero: { name: 'Hero (big title)', fields: [['kicker', T, 'Small line above the title'], ['title', T, 'Title'], ['subtitle', A, 'Subtitle'], ['image', 'image', 'Background image'], ['cover', 'image', 'Cover picture on the side (optional)'], ['icon', 'text', 'Icon (emoji, optional)'], ['chips', 'list', 'Tags (Windows, Free…)', [['en', 'text', 'English'], ['he', 'text', 'עברית']]], ['buttons', 'list', 'Buttons', BTN]] },
+  gallery: { name: 'Screenshots gallery', fields: [['title', T, 'Title'], ['images', 'imglist', 'Pictures']] },
+  features: { name: 'Features (icon + title + text)', fields: [['title', T, 'Title'], ['items', 'list', 'Features', [['icon', 'text', 'Icon (emoji)'], ['title', T, 'Title'], ['text', A, 'Text']]]] },
+  info: { name: 'Game details table', fields: [['title', T, 'Title'], ['rows', 'list', 'Rows', [['label', T, 'Label'], ['value', T, 'Value']]]] },
+  timeline: { name: 'Timeline / roadmap', fields: [['title', T, 'Title'], ['items', 'list', 'Steps', [['date', 'text', 'Date (YYYY-MM-DD)'], ['when', T, 'Date text (optional, instead)'], ['title', T, 'Title'], ['text', A, 'Text'], ['url', 'url', 'Link (optional)']]]] },
+  faq: { name: 'Questions & answers', fields: [['title', T, 'Title'], ['items', 'list', 'Questions', [['q', T, 'Question'], ['a', A, 'Answer']]]] },
+  numbers: { name: 'Big numbers', fields: [['items', 'list', 'Numbers', [['value', T, 'Number'], ['label', T, 'Label']]]] },
+  split: { name: 'Picture + text', fields: [['kicker', T, 'Small line'], ['title', T, 'Title'], ['body', A, 'Text'], ['image', 'image', 'Picture'], ['flip', 'check', 'Picture on the other side'], ['url', 'url', 'Button link (optional)'], ['label', T, 'Button text']] },
+  text: { name: 'Text', fields: [['kicker', T, 'Small line (optional)'], ['title', T, 'Title (optional)'], ['body', A, 'Text: **bold**, [link](https://…), blank line = new paragraph']] },
   image: { name: 'Image', fields: [['src', 'image', 'Image'], ['caption', T, 'Caption'], ['wide', 'check', 'Full width']] },
   cards: { name: 'Cards (games, links…)', fields: [['title', T, 'Title (optional)'], ['items', 'list', 'Cards', [['title', T, 'Title'], ['text', A, 'Text'], ['image', 'image', 'Image'], ['icon', 'text', 'Icon if no image (emoji)'], ['badge', T, 'Badge'], ['url', 'url', 'Link (https://… or #/page)'], ['soon', 'check', 'Coming soon (dimmed)']]]] },
   buttons: { name: 'Buttons', fields: [['items', 'list', 'Buttons', BTN]] },
@@ -37,6 +44,13 @@ const NEW_BLOCK = {
   video: () => ({ type: 'video', url: '' }),
   html: () => ({ type: 'html', code: '<h1 style="color:#fff;font-family:sans-serif">Hello!</h1>', height: 200 }),
   spacer: () => ({ type: 'spacer', size: 40 }),
+  gallery: () => ({ type: 'gallery', title: { en: 'Screenshots', he: 'צילומי מסך' }, images: [] }),
+  features: () => ({ type: 'features', title: { en: 'Features', he: 'מה יש במשחק' }, items: [{ icon: '⚡', title: { en: 'Feature', he: 'פיצ׳ר' }, text: { en: '', he: '' } }] }),
+  info: () => ({ type: 'info', title: { en: 'Details', he: 'פרטים' }, rows: [{ label: { en: 'Platforms', he: 'פלטפורמות' }, value: { en: 'Windows', he: 'Windows' } }] }),
+  timeline: () => ({ type: 'timeline', title: { en: 'Roadmap', he: 'מה הלאה' }, items: [{ date: new Date().toISOString().slice(0, 10), title: { en: 'Step', he: 'שלב' }, text: { en: '', he: '' } }] }),
+  faq: () => ({ type: 'faq', title: { en: 'Questions', he: 'שאלות' }, items: [{ q: { en: 'Question?', he: 'שאלה?' }, a: { en: 'Answer.', he: 'תשובה.' } }] }),
+  numbers: () => ({ type: 'numbers', items: [{ value: { en: '10', he: '10' }, label: { en: 'Games', he: 'משחקים' } }] }),
+  split: () => ({ type: 'split', title: { en: 'Title', he: 'כותרת' }, body: { en: 'Text', he: 'טקסט' }, image: '' }),
   stats: () => ({ type: 'stats' })
 };
 
@@ -46,8 +60,8 @@ export async function start() {
   document.documentElement.classList.add('admin');
   try {
     const d = await fb.get('site_draft', true);
-    if (d && d.pages) S.site = d;
-    status = d && d.pages ? L('Draft loaded', 'הטיוטה נטענה') : '';
+    if (d && d.pages && (d.version || 1) >= (S.site.version || 1)) S.site = d;
+    status = d && d.pages && S.site === d ? L('Draft loaded', 'הטיוטה נטענה') : (S.live && (S.live.version || 1) < (S.site.version || 1) ? L('New content version: check it and Publish', 'גרסת תוכן חדשה: בדקו ופרסמו') : '');
   } catch (e) { status = L('Draft not reachable (rules?)', 'אין גישה לטיוטה (חוקים?)'); }
   hooks.decorate = decorate;
   bar();
@@ -161,6 +175,10 @@ function fieldsHTML(fields, obj, base) {
     if (type === 'code') return `<div class="fld"><label>${esc(label || key)}</label><textarea data-p="${p}" rows="10" dir="ltr" class="mono">${esc(v || '')}</textarea></div>`;
     if (type === 'datetime') { const d = v ? new Date(v) : new Date(); const loc = new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); return `<div class="fld"><label>${esc(label || key)}</label><input type="datetime-local" data-p="${p}" data-dt="1" value="${loc}"></div>`; }
     if (type === 'image') return `<div class="fld"><label>${esc(label || key)}</label><div class="imgf">${v ? `<img src="${esc(img(v))}" alt="">` : ''}<input data-p="${p}" dir="ltr" placeholder="https://… ${L('or upload', 'או העלאה')}" value="${esc(v || '')}"><button type="button" class="btn ghost sm" data-up="${p}">⬆ ${L('Upload', 'העלאה')}</button></div></div>`;
+    if (type === 'imglist') {
+      const arr = Array.isArray(v) ? v : [];
+      return `<div class="fld"><label>${esc(label || key)}</label><div class="imgs">${arr.map((src, i) => `<div class="imgs-i"><img src="${esc(img(src))}" alt=""><button type="button" data-ldel="${p}" data-li="${i}">🗑</button></div>`).join('')}</div><div class="row" style="justify-content:flex-start"><button type="button" class="btn ghost sm" data-upadd="${p}">⬆ ${L('Upload a picture', 'העלאת תמונה')}</button><input data-urladd="${p}" dir="ltr" placeholder="${L('or paste a picture link and press Enter', 'או הדביקו קישור לתמונה ולחצו Enter')}"></div></div>`;
+    }
     if (type === 'list') {
       const arr = Array.isArray(v) ? v : [];
       return `<div class="fld"><label>${esc(label || key)}</label>${arr.map((_, i) => `<fieldset><div class="lt"><b>${i + 1}</b><button type="button" data-lup="${p}" data-li="${i}">▲</button><button type="button" data-ldn="${p}" data-li="${i}">▼</button><button type="button" data-ldel="${p}" data-li="${i}">🗑</button></div>${fieldsHTML(extra, obj, p + '.' + i)}</fieldset>`).join('')}<button type="button" class="btn ghost sm" data-ladd="${p}">＋ ${L('Add', 'הוספה')}</button></div>`;
@@ -188,6 +206,12 @@ function form(title, fields, obj, onSave, extraHTML) {
       if (listOp('ldn', (arr, i) => { if (i < arr.length - 1) [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]]; })) return;
       if (listOp('ldel', (arr, i) => arr.splice(i, 1))) return;
       if (b.dataset.up) { const v = await uploadImage(); if (v) { setP(work, b.dataset.up, v); draw(); } }
+      if (b.dataset.upadd) { const v = await uploadImage(); if (v) { const arr = getP(work, b.dataset.upadd) || []; arr.push(v); setP(work, b.dataset.upadd, arr); draw(); } }
+    });
+    f.addEventListener('keydown', e => {
+      const el = e.target; if (e.key !== 'Enter' || !el.dataset || !el.dataset.urladd) return;
+      e.preventDefault(); const u = el.value.trim(); if (!/^https?:\/\//.test(u)) return;
+      const arr = getP(work, el.dataset.urladd) || []; arr.push(u); setP(work, el.dataset.urladd, arr); draw();
     });
     f.onsubmit = e => { e.preventDefault(); onSave(work); closeModal(); };
   };
